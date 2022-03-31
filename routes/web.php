@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\MicrosoftController;
 use App\Http\Controllers\FormController;
+use App\Http\Controllers\HandleMailsController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -28,3 +29,11 @@ Route::get('logout', [MicrosoftController::class, 'logout']);
 
 Route::get('form', [FormController::class, 'renderForm'])->middleware('auth');
 
+//ruta de la consulta de correos en imap
+
+Route::get('correos/todos', [HandleMailsController::class, 'getAllMails']);
+
+
+//ruta de monitoreo de correos
+
+Route::get('monitorear_correo/test', [HandleMailsController::class, 'monitorearCorreo']);
