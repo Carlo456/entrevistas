@@ -11,7 +11,7 @@ class HandleMailsController extends Controller
     public static function getAllMails(){
         $incoming_mail_server = env('MAIL_SERVER_CONNECTION');
         //$incoming_mail_server = "{imap.gmail.com:993/imap/ssl}INBOX";
-        //$incoming_mail_server = '{https%3A%2F%2Foutlook.office.com%2FIMAP.AccessAsUser.All%20https%3A%2F%2Foutlook.office.com%2FPOP.AccessAsUser.All%20https%3A%2F%2Foutlook.office.com%2FSMTP.Send%20offline_access%20openId%20email}INBOX';
+
         //$incoming_mail_server = '{outlook.office365.com:993/tls}';
 
         $your_email = env('MAIL_ADDRESS'); // your outlook email ID
