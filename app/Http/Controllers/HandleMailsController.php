@@ -3,93 +3,75 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-
 use Illuminate\Support\Facades\Storage;
+use App\Exceptions;
+use Illuminate\Support\Facades\Log;
+use App\Models\Prospecto;
 
 class HandleMailsController extends Controller
 {
     public static function getAllMails(){
-        $incoming_mail_server = env('MAIL_SERVER_CONNECTION');
-        //$incoming_mail_server = "{imap.gmail.com:993/imap/ssl}INBOX";
+        try {
+            $incoming_mail_server = env('IMAP_SERVER_CONNECTION');
+            $email = env('IMAP_ADDRESS');
+            $password = env('IMAP_PASSWORD');
 
-        //$incoming_mail_server = '{outlook.office365.com:993/tls}';
+            $mbox = imap_open($incoming_mail_server, $email , $password ) or die("can't connect: " . imap_last_error());
+            $num = imap_num_msg($mbox); // read total messages in email
 
-        $your_email = env('MAIL_ADDRESS'); // your outlook email ID
-        $yourpassword = env('MAIL_PASSWORD'); // your outlook email password
-        $mbox =imap_open($incoming_mail_server, $your_email, $yourpassword);
-        //$mbox = imap_open($incoming_mail_server, $your_email , $yourpassword ) or die("can't connect: " . imap_last_error());
-        $num = imap_num_msg($mbox); // read total messages in email
-        $MC = imap_check($mbox);
+            $email = imap_fetchbody($mbox,$num,1.1); // 1.1 lee text/plain solamente, 1.2 lee text/html y 1 lee todo
+            $email_attachment = imap_fetchbody($mbox,$num,2); //2 lee el archivo para correos con attachment mime
+            $structure = imap_fetchstructure($mbox, $num);
 
-        $output = "";
-
-        //$emails = imap_search($mbox,'ALL');
-
-
-        $email = imap_fetchbody($mbox,$num,1);
-        $output .= $email;
-
-        /*
-        foreach($emails as $email){
-            $headerInfo = imap_headerinfo($mbox,$email);
-
-            $output .= $headerInfo->subject.'<br/>';
-            $output .= $headerInfo->toaddress.'<br/>';
-            $output .= $headerInfo->date.'<br/>';
-            $output .= $headerInfo->fromaddress.'<br/>';
-            //$output .= $headerInfo->reply_toaddress.'<br/>';
-
-            $emailStructure = imap_fetchstructure($mbox,$email);
-
-            if(!isset($emailStructure->parts)) {
-                $output .= imap_qprint(imap_body($mbox, $email, FT_PEEK));
-            } else {
-                //
+            function get_string_between($string, $start, $end){
+                $string = ' ' . $string;
+                $ini = strpos($string, $start);
+                if ($ini == 0) return '';
+                $ini += strlen($start);
+                $len = strpos($string, $end, $ini) - $ini;
+                return substr($string, $ini, $len);
             }
-        echo $output;
+
+            $new_prospect_name = get_string_between($email, 'Name', 'Level (Seniority in the IT Industry)');
+            //echo $new_prospect_name;
+            $seniority = get_string_between($email, 'Level (Seniority in the IT Industry)', 'Location');
+            //echo $seniority;
+            $disponibility = get_string_between($email, 'Interview availability', 'Visa & Passport');
+            //echo $disponibility;
+            $email_attachment = base64_decode($email_attachment);
+
+
+            $curriculum = get_object_vars($structure->parts[1]);
+            $curriculum_name = $curriculum['description'];
+            $file_extention = $curriculum['subtype'];
+
+            imap_expunge($mbox);
+            imap_close($mbox);
+        } catch (Exception $e) {
+            dd($e->getMessage());
         }
 
-        /* ------------------------------------------------------------------- */
-        /*
-        $msg=array();
-  // Fetch an overview for all messages in INBOX
-        $result = imap_fetch_overview($mbox,"$num:{$MC->Nmsgs}",0);
-        foreach ($result as $overview) {
-            echo 'Message no'.$overview->msgno. '<br/>';
-                    "{$overview->subject}<br/>";
-            $check = imap_mailboxmsginfo($mbox);
+        try {
+            $file_name = $curriculum_name;
 
-        echo $check->Unread;
-
-        echo $overview->subject;
-        echo imap_body($mbox, $overview->msgno);
-
-    //code to check and display email received from a particular Email address
-        if(preg_match("/carlo.valenzuela@improving.com.mx/",$overview->from,$match)){
-              $msg[$overview->msgno]=$overview->subject;
-              imap_delete($mbox,$overview->msgno);
-        } else {
-              imap_delete($mbox,$overview->msgno);
+            $find_prospect = Prospecto::where('name', $new_prospect_name)->first();
+            if ($find_prospect) {
+                echo "ya existe, ya se envio notificacion";
+            } else {
+                $prospect = Prospecto::create([
+                    'name' => $new_prospect_name,
+                    'seniority' => $seniority,
+                    'disponibility' => $disponibility,
+                    'curriculum_filename' => $curriculum_name
+                ]);
+                Storage::disk('local')->append('Ejemplo.txt', $email);
+                $path = Storage::disk('s3')->put($file_name, $email_attachment);
+                $path = Storage::disk('s3')->url($path);
+                echo "curriculum guardado";
+        }
+        } catch (Exception $e) {
+            dd($e->getMessage());
         }
 
-        }
-
-        */
-        //imap_expunge($mbox);
-        echo $output;
-        imap_close($mbox);
-
-        $num_random = rand(1,1000);
-        $nombre = "Ejemplo.txt";
-        Storage::disk('local')->append($nombre, $output);
     }
-
-    public static function monitorearCorreo(){
-
-        $num_random = rand(1,1000);
-        $nombre = "Ejemplo.txt";
-        Storage::disk('local')->append($nombre, "Content no $num_random\n");
-    }
-
-
 }

@@ -31,9 +31,9 @@ Route::get('form', [FormController::class, 'renderForm'])->middleware('auth');
 
 //ruta de la consulta de correos en imap
 
-Route::get('correos/todos', [HandleMailsController::class, 'getAllMails']);
+Route::get('mails/all', [HandleMailsController::class, 'getAllMails']);
 
 
 //ruta de monitoreo de correos
 
-Route::get('monitorear_correo/test', [HandleMailsController::class, 'monitorearCorreo']);
+
