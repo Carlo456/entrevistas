@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Prospecto extends Model
+class Prospect extends Model
 {
     use HasFactory;
         /**
@@ -13,7 +13,7 @@ class Prospecto extends Model
      *
      * @var string
      */
-    protected $table = 'datos_prospectos';
+    protected $table = 'prospect_data';
         /**
      * The primary key associated with the table.
      *
@@ -33,7 +33,7 @@ class Prospecto extends Model
     protected $fillable = [
         'name',
         'seniority',
-        'disponibility',
+        'availability',
         'curriculum_filename'
     ];
 

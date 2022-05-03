@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Exceptions;
 use Illuminate\Support\Facades\Log;
-use App\Models\Prospecto;
+use App\Models\Prospect;
 
 class HandleMailsController extends Controller
 {
@@ -36,7 +36,7 @@ class HandleMailsController extends Controller
             //echo $new_prospect_name;
             $seniority = get_string_between($email, 'Level (Seniority in the IT Industry)', 'Location');
             //echo $seniority;
-            $disponibility = get_string_between($email, 'Interview availability', 'Visa & Passport');
+            $availability = get_string_between($email, 'Interview availability', 'Visa & Passport');
             //echo $disponibility;
             $email_attachment = base64_decode($email_attachment);
 
@@ -54,14 +54,14 @@ class HandleMailsController extends Controller
         try {
             $file_name = $curriculum_name;
 
-            $find_prospect = Prospecto::where('name', $new_prospect_name)->first();
+            $find_prospect = Prospect::where('name', $new_prospect_name)->first();
             if ($find_prospect) {
                 echo "ya existe, ya se envio notificacion";
             } else {
-                $prospect = Prospecto::create([
+                $prospect = Prospect::create([
                     'name' => $new_prospect_name,
                     'seniority' => $seniority,
-                    'disponibility' => $disponibility,
+                    'availability' => $availability,
                     'curriculum_filename' => $curriculum_name
                 ]);
                 Storage::disk('local')->append('Ejemplo.txt', $email);
